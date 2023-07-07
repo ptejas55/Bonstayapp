@@ -1,45 +1,26 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const BookingForm = () => {
-  const [formData, setFormData] = useState({
-    startDate: '',
-    endDate: '',
-    numOfPersons: '',
-    roomType: ''
-  });
+const RescheduleForm = () => {
+  const [bookingId, setBookingId] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState('');
 
-  const [errors, setErrors] = useState({
-    startDate: '',
-    endDate: '',
-    numOfPersons: '',
-    roomType: ''
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleReschedule = (e) => {
     e.preventDefault();
 
     // Validate the form
     const newErrors = {};
-    if (!formData.startDate) {
+    if (!bookingId) {
+      newErrors.bookingId = 'Booking ID is required';
+    }
+    if (!startDate) {
       newErrors.startDate = 'Start date is required';
     }
-    if (!formData.endDate) {
+    if (!endDate) {
       newErrors.endDate = 'End date is required';
-    }
-    if (!formData.numOfPersons) {
-      newErrors.numOfPersons = 'Number of persons is required';
-    }
-    if (!formData.roomType) {
-      newErrors.roomType = 'Room type is required';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -47,39 +28,40 @@ const BookingForm = () => {
       return;
     }
 
-    // Submit the form
+    // Make the PUT request
     axios
-      .post('http://localhost:3000/bookings', formData)
+      .put(`http://localhost:3000/bookings/${bookingId}`, { startDate, endDate })
       .then((response) => {
-        console.log('Booking success!', response.data);
-        // Reset form data
-        setFormData({
-          startDate: '',
-          endDate: '',
-          numOfPersons: '',
-          roomType: ''
-        });
-        setErrors({
-          startDate: '',
-          endDate: '',
-          numOfPersons: '',
-          roomType: ''
-        });
+        setMessage(response.data.message);
+        // Reset form values and errors
+        setBookingId('');
+        setStartDate('');
+        setEndDate('');
+        setErrors({});
       })
       .catch((error) => {
-        console.error('Booking failed!', error);
+        console.error('Rescheduling failed!', error);
       });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleReschedule}>
+      <div>
+        <label>Booking ID:</label>
+        <input
+          type="text"
+          value={bookingId}
+          onChange={(e) => setBookingId(e.target.value)}
+        />
+        {errors.bookingId && <span className="error">{errors.bookingId}</span>}
+      </div>
+
       <div>
         <label>Start Date:</label>
         <input
           type="date"
-          name="startDate"
-          value={formData.startDate}
-          onChange={handleChange}
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
         />
         {errors.startDate && <span className="error">{errors.startDate}</span>}
       </div>
@@ -88,38 +70,17 @@ const BookingForm = () => {
         <label>End Date:</label>
         <input
           type="date"
-          name="endDate"
-          value={formData.endDate}
-          onChange={handleChange}
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
         />
         {errors.endDate && <span className="error">{errors.endDate}</span>}
       </div>
 
-      <div>
-        <label>Number of Persons:</label>
-        <input
-          type="number"
-          name="numOfPersons"
-          value={formData.numOfPersons}
-          onChange={handleChange}
-        />
-        {errors.numOfPersons && <span className="error">{errors.numOfPersons}</span>}
-      </div>
+      <button type="submit">Reschedule</button>
 
-      <div>
-        <label>Room Type:</label>
-        <select name="roomType" value={formData.roomType} onChange={handleChange}>
-          <option value="">Select Room Type</option>
-          <option value="single">Single</option>
-          <option value="double">Double</option>
-          <option value="suite">Suite</option>
-        </select>
-        {errors.roomType && <span className="error">{errors.roomType}</span>}
-      </div>
-
-      <button type="submit">Book</button>
+      {message && <p>{message}</p>}
     </form>
   );
 };
 
-export default BookingForm;
+export default RescheduleForm;
